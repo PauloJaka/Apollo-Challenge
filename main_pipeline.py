@@ -1,5 +1,6 @@
 from data_processing import DataProcessor
 from data_visualization import analyze_and_create_collage
+from classification_process import knn_classification
 
 pickle_path = "/media/paulo-jaka/Extras/DesafiosML/mini_gm_public_v0.1.p"
 processor = DataProcessor(pickle_path)
@@ -15,5 +16,7 @@ if df is not None:
     processor.calculate_statistics()  
     processor.print_statistics()  
     processor.generate_profile_report() 
+    knn_classification(df, metric='euclidean', k=5)
+    knn_classification(df, metric='cosine', k=5)
 else:
     print("[ERROR] DataFrame is empty or failed to load.")
