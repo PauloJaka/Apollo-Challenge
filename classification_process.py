@@ -1,11 +1,10 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split, cross_val_score,KFold  # type: ignore
-from sklearn.preprocessing import StandardScaler, MinMaxScaler  # type: ignore
+from sklearn.preprocessing import  MinMaxScaler  # type: ignore
 from sklearn.neighbors import KNeighborsClassifier  # type: ignore
 from sklearn.metrics import  accuracy_score,classification_report,roc_auc_score,f1_score,top_k_accuracy_score, top_k_accuracy_score  # type: ignore
 from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
-from sklearn.decomposition import PCA # type: ignore
 from sklearn.feature_selection import SelectKBest, f_classif  # type: ignore
 
 def knn_euclidean(X_train, X_test, y_train, y_test, k=5):
