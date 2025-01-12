@@ -16,7 +16,6 @@ if df is not None:
     processor.calculate_statistics()  
     processor.print_statistics()  
     processor.generate_profile_report() 
-    knn_classification(df, metric='euclidean')
-    knn_classification(df, metric='cosine')
+    knn_classification(df)
 else:
     print("[ERROR] DataFrame is empty or failed to load.")

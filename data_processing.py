@@ -69,10 +69,25 @@ class DataProcessor:
             print(f"[ERROR] Failed to generate ProfileReport: {e}")
 
     def process(self) -> pd.DataFrame | None:
-        self.load_and_flatten_data()
+        self.load_and_flatten_data() 
         if self.df is not None:
             self.calculate_statistics()
             self.print_statistics()
             self.generate_profile_report()
             return self.df
         return None
+
+
+pickle_path = "/media/paulo-jaka/Extras/DesafiosML/mini_gm_public_v0.1.p"
+processor = DataProcessor(pickle_path)
+
+if __name__ == "__main__":
+    df = processor.load_and_flatten_data()
+    
+    if df is not None:
+        # pipeline run
+        output_path = 'syndrome_collage.png'
+        
+        processor.calculate_statistics()  
+        processor.print_statistics()  
+        processor.generate_profile_report() 

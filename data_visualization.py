@@ -1,7 +1,7 @@
-import numpy as np
+import numpy as np 
 from sklearn.manifold import TSNE  # type: ignore
-import pandas as pd
-import matplotlib.pyplot as plt
+import pandas as pd  # type: ignore
+import matplotlib.pyplot as plt  # type: ignore
 from sklearn.preprocessing import LabelEncoder  # type: ignore
 from data_processing import DataProcessor
 from sklearn.cluster import KMeans, DBSCAN  # type: ignore
@@ -30,18 +30,43 @@ def plot_tsne_with_syndrome_id(df: pd.DataFrame) -> None:
     if 'tsne_x' not in df.columns or 'tsne_y' not in df.columns:
         print("[ERROR] t-SNE components not found in the DataFrame.")
         return
+
+    unique_syndromes = df['syndrome_id'].unique()
+    n_syndromes = len(unique_syndromes)
+    cmap = plt.get_cmap('tab20') 
+    colors = [cmap(i/n_syndromes) for i in range(n_syndromes)]
+    color_dict = dict(zip(unique_syndromes, colors))
+
+    plt.figure(figsize=(12, 8))
     
-    label_encoder = LabelEncoder()
-    syndrome_id_encoded = label_encoder.fit_transform(df['syndrome_id'])
-    
-    plt.figure(figsize=(10, 8))
-    scatter = plt.scatter(df['tsne_x'], df['tsne_y'], c=syndrome_id_encoded, cmap='viridis', s=10)
-    plt.colorbar(scatter, label='Syndrome ID')
-    plt.title('t-SNE Visualization of Embeddings Colored by Syndrome ID')
+    for syndrome in unique_syndromes:
+        mask = df['syndrome_id'] == syndrome
+        plt.scatter(
+            df.loc[mask, 'tsne_x'],
+            df.loc[mask, 'tsne_y'],
+            c=[color_dict[syndrome]],
+            label=syndrome,
+            alpha=0.6,
+            s=50
+        )
+
+    plt.title('t-SNE Visualization of Embeddings by Syndrome', fontsize=12)
     plt.xlabel('t-SNE Component 1')
     plt.ylabel('t-SNE Component 2')
     
-    plt.savefig('tsne_with_syndrome_id.png')  
+    plt.legend(
+        title="Syndrome IDs",
+        bbox_to_anchor=(1.05, 1),
+        loc='upper left',
+        borderaxespad=0.
+    )
+    
+    plt.tight_layout()
+    plt.savefig(
+        'tsne_with_syndrome_id.png',
+        bbox_inches='tight',
+        dpi=300
+    )
     plt.close()
 
 def plot_tsne_with_clusters(df: pd.DataFrame) -> None:
@@ -107,3 +132,16 @@ def analyze_and_create_collage(df: pd.DataFrame, output_path: str) -> None:
     plot_tsne_with_syndrome_id(df_with_tsne)
     plot_tsne_with_clusters(df_with_tsne)
     create_syndrome_collage(df_with_tsne, output_path)
+    
+    
+if __name__ == "__main__":
+    from data_processing import DataProcessor  
+    pickle_path = "/media/paulo-jaka/Extras/DesafiosML/mini_gm_public_v0.1.p"
+    processor = DataProcessor(pickle_path)
+    df = processor.load_and_flatten_data()
+
+    if df is not None:
+        # pipeline run
+        output_path = 'syndrome_collage.png'
+        analyze_and_create_collage(df, output_path)
+
