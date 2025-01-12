@@ -237,11 +237,6 @@ def knn_cosine_cv(X, y, n_splits=10):
     }
 
 def align_arrays(y_test_bin, y_pred_proba):
-    """
-    Ajusta os tamanhos de y_test_bin e y_pred_proba para serem consistentes.
-    Mantém apenas as amostras que têm correspondência em ambos os arrays.
-    """
-
     min_samples = min(y_test_bin.shape[0], y_pred_proba.shape[0])
     y_test_bin_aligned = y_test_bin[:min_samples]
     y_pred_proba_aligned = y_pred_proba[:min_samples]
