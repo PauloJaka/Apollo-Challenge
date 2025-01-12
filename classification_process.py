@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split, cross_val_score,KFold  # type: ignore
-from sklearn.preprocessing import  MinMaxScaler , LabelBinarizer # type: ignore
+from sklearn.preprocessing import  MinMaxScaler , LabelBinarizer, label_binarize # type: ignore
 from sklearn.neighbors import KNeighborsClassifier  # type: ignore
 from sklearn.metrics import  accuracy_score,classification_report,roc_auc_score,f1_score,top_k_accuracy_score, top_k_accuracy_score, roc_curve, auc  # type: ignore
 from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
@@ -106,7 +106,6 @@ def knn_euclidean(X_train, X_test, y_train, y_test):
         "final_y_pred_proba": y_pred_proba     # Adicionando as probabilidades de previsão
     }
 
-
 def preprocess_cosine_similarity(X_train, X_test):
     X_train_cosine = cosine_similarity(X_train)
     X_test_cosine = cosine_similarity(X_test, X_train)
@@ -124,7 +123,6 @@ def preprocess_cosine_similarity(X_train, X_test):
     return X_train_cosine, X_test_cosine
 
 def calculate_metrics(y_true, y_pred, y_pred_prob, k_value):
-    """Função para calcular as métricas"""
     auc = roc_auc_score(y_true, y_pred_prob, multi_class='ovr', average='macro')
     f1 = f1_score(y_true, y_pred, average='weighted')
     top_k_accuracy = np.mean([1 if y_true[i] in y_pred[i][:k_value] else 0 for i in range(len(y_true))])
@@ -176,11 +174,11 @@ def knn_cosine_cv(X, y, n_splits=10):
         
         metrics_per_k.append({
             'k': k_value,
-            'accuracy': mean_accuracy,  # Renomeado para manter consistência
+            'accuracy': mean_accuracy, 
             'auc': mean_auc,
-            'f1_score': mean_f1,  # Renomeado para manter consistência
+            'f1_score': mean_f1, 
             'top_k_accuracy': mean_top_k_accuracy,
-            'y_pred_proba': np.concatenate(fold_y_pred_prob, axis=0)  # Renomeado para manter consistência
+            'y_pred_proba': np.concatenate(fold_y_pred_prob, axis=0) 
         })
         
         print(f"[INFO] Testando k={k_value}... Acurácia média: {mean_accuracy:.4f} | AUC: {mean_auc:.4f} | F1-Score: {mean_f1:.4f} | Top-{k_value} Accuracy: {mean_top_k_accuracy:.4f}")
@@ -188,13 +186,12 @@ def knn_cosine_cv(X, y, n_splits=10):
         if mean_accuracy > best_overall_accuracy:
             best_overall_accuracy = mean_accuracy
             best_k = k_value
-            best_scores = np.array(fold_scores)  # Adicionado para manter consistência
+            best_scores = np.array(fold_scores)  # Better cosisntesy
     
     print(f"[INFO] Melhor valor de k: {best_k}")
     print(f"\nCross-Validation Results for Cosine KNN:")
     print(f"Mean Accuracy: {best_scores.mean():.4f} (±{best_scores.std():.4f})")
     
-    # Avaliação final com o melhor k
     final_predictions = []
     final_true_labels = []
     final_auc_scores = []
@@ -228,65 +225,70 @@ def knn_cosine_cv(X, y, n_splits=10):
     print(f"F1-Score: {np.mean(final_f1_scores):.4f}")
     print(f"Top-{best_k} Accuracy: {np.mean(final_top_k_accuracies):.4f}")
     
+    
     return {
         "best_k": best_k,
         "best_accuracy": best_overall_accuracy,
-        "best_scores": best_scores,  # Adicionado para manter consistência
-        "final_auc": np.mean(final_auc_scores),
+        "best_scores": best_scores, 
+        "final_auc": np.mean(final_auc_scores), 
         "final_f1_score": np.mean(final_f1_scores),
         "final_top_k_accuracy": np.mean(final_top_k_accuracies),
         "metrics_per_k": metrics_per_k,
         "final_y_pred_proba": np.concatenate(final_y_pred_prob, axis=0)
     }
 
-
-
-
-def plot_roc_curve(metrics_per_k, y_test, output_dir="./", syndrome_mapping=None):
+def align_arrays(y_test_bin, y_pred_proba):
     """
-    Plota a curva ROC para o melhor modelo.
+    Ajusta os tamanhos de y_test_bin e y_pred_proba para serem consistentes.
+    Mantém apenas as amostras que têm correspondência em ambos os arrays.
     
-    Parameters:
-    -----------
-    metrics_per_k : list of dict
-        Lista com métricas para cada k, incluindo as probabilidades preditas
-    y_test : array-like
-        Labels verdadeiras
-    output_dir : str
-        Diretório onde salvar o plot
-    syndrome_mapping : dict
-        Dicionário que mapeia `syndrome_id` para seus respectivos nomes. 
-        Exemplo: {0: 'Sindrome A', 1: 'Sindrome B'}
+    Args:
+        y_test_bin (np.ndarray): Array binário real das classes.
+        y_pred_proba (np.ndarray): Array com as probabilidades previstas.
+        
+    Returns:
+        Tuple[np.ndarray, np.ndarray]: Arrays alinhados com tamanhos consistentes.
     """
+    # Identifica o tamanho mínimo entre os dois arrays
+    min_samples = min(y_test_bin.shape[0], y_pred_proba.shape[0])
+    
+    # Ajusta ambos os arrays para o tamanho mínimo
+    y_test_bin_aligned = y_test_bin[:min_samples]
+    y_pred_proba_aligned = y_pred_proba[:min_samples]
+    
+    return y_test_bin_aligned, y_pred_proba_aligned
+
+def plot_roc_curve(metrics_per_k, y_test, output_dir="./", syndrome_mapping=None, file_name='ROC_curve'):
     plt.figure(figsize=(10, 8))
     
-    # Encontrar o melhor k (aquele com maior AUC)
     best_k_idx = np.argmax([m['auc'] for m in metrics_per_k])
     best_k_metrics = metrics_per_k[best_k_idx]
     
-    # Pegar as probabilidades preditas do melhor modelo
     y_pred_proba = best_k_metrics['y_pred_proba']
     
-    # Converter y_test para formato one-hot
     lb = LabelBinarizer()
     y_test_bin = lb.fit_transform(y_test)
     
-    # Se tivermos apenas duas classes, ajustar o formato
     if y_test_bin.shape[1] == 1:
         y_test_bin = np.hstack([1 - y_test_bin, y_test_bin])
     
-    # Garantir que temos um mapeamento válido
     if syndrome_mapping is None:
         syndrome_mapping = {i: f'Class {i}' for i in range(y_test_bin.shape[1])}
+    
+    # Ajustar os tamanhos de y_test_bin e y_pred_proba
+    def align_arrays(arr1, arr2):
+        min_length = min(len(arr1), len(arr2))
+        return arr1[:min_length], arr2[:min_length]
+
+    y_test_bin, y_pred_proba = align_arrays(y_test_bin, y_pred_proba)
     
     # Plotar curva ROC para cada classe
     for i in range(y_test_bin.shape[1]):
         fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_proba[:, i])
         roc_auc = auc(fpr, tpr)
-        class_name = syndrome_mapping.get(i, f'Class {i}')  # Usar o nome mapeado
+        syndrome_id = lb.classes_[i] 
         plt.plot(fpr, tpr, lw=2,
-                label=f'ROC curve ({class_name}) (AUC = {roc_auc:.2f})')
-    
+                label=f'ROC curve (syndrome {syndrome_id}) (AUC = {roc_auc:.2f})')  
     plt.plot([0, 1], [0, 1], 'k--', lw=2)
     plt.xlim([0.0, 1.0])
     plt.ylim([0.0, 1.05])
@@ -296,10 +298,30 @@ def plot_roc_curve(metrics_per_k, y_test, output_dir="./", syndrome_mapping=None
     plt.legend(loc="lower right")
     
     # Salvar o plot
-    plt.savefig(os.path.join(output_dir, 'roc_curve.png'))
+    plt.savefig(os.path.join(output_dir, f'roc_curve_{file_name}.png'))
     plt.close()
 
-
+def summarize_metrics(metrics_per_k, output_dir="./", rank_by="accuracy", file_name="Resume_data"):
+    
+    metrics_df = pd.DataFrame(metrics_per_k)
+    
+    if 'syndrome_id' not in metrics_df.columns:
+        print("[WARNING] 'syndrome_id' não encontrado nas métricas. A coluna será preenchida com NaN.")
+        metrics_df['syndrome_id'] = None 
+    
+    metrics_df = metrics_df.sort_values(by=rank_by, ascending=False).reset_index(drop=True)
+    
+    metrics_df["rank"] = metrics_df.index + 1  
+    
+    if output_dir:
+        output_path = f"{output_dir}/{file_name}.csv"
+        metrics_df.to_csv(output_path, index=False)
+        print(f"[INFO] Métricas salvas em: {output_path}")
+    
+    print("\nResumo das Métricas:")
+    print(metrics_df.head())
+    
+    return metrics_df
 
 def knn_classification(df: pd.DataFrame, metric: str = 'euclidean'):
     if 'embedding' not in df.columns or 'syndrome_id' not in df.columns:
@@ -315,36 +337,7 @@ def knn_classification(df: pd.DataFrame, metric: str = 'euclidean'):
     print(f"Shape of X_train: {X_train.shape}")
     print(f"Shape of X_test: {X_test.shape}")
 
-    if metric == 'euclidean':
-        # Chamando a função knn_euclidean para a métrica Euclidiana
-        results = knn_euclidean(X_train, X_test, y_train, y_test)
-        
-        # Acessando as métricas do dicionário retornado
-        best_k = results["best_k"]
-        best_accuracy = results["best_accuracy"]
-        best_scores = results["best_scores"]
-        final_auc = results["final_auc"]
-        final_f1_score = results["final_f1_score"]
-        final_top_k_accuracy = results["final_top_k_accuracy"]
-        metrics_per_k = results["metrics_per_k"]  # Acessando as métricas por k
-        
-        # Imprimindo as métricas
-        print(f"\nCross-Validation Results for Euclidean KNN:")
-        print(f"Best k: {best_k}")
-        print(f"Best Mean Accuracy: {best_accuracy:.4f}")
-        print(f"Cross-validation scores (mean ± std): {best_scores.mean():.4f} ± {best_scores.std():.4f}")
-        print(f"AUC: {final_auc:.4f}")
-        print(f"F1-Score: {final_f1_score:.4f}")
-        print(f"Top-{best_k} Accuracy: {final_top_k_accuracy:.4f}")
-        
-        # Plotando a curva ROC e salvando a imagem
-        plot_roc_curve(metrics_per_k, y_test, output_dir="./")  # Salvar no diretório atual
-        
-    elif metric == 'cosine':
-        # Chamando a função knn_cosine_cv
-        results = knn_cosine_cv(X_train, y_train)
-
-        # Acessando as métricas do dicionário retornado
+    def process_results(results, metric_name, values_for_plot, y_test):
         best_k = results["best_k"]
         best_accuracy = results["best_accuracy"]
         best_scores = results["best_scores"]
@@ -353,8 +346,7 @@ def knn_classification(df: pd.DataFrame, metric: str = 'euclidean'):
         final_top_k_accuracy = results["final_top_k_accuracy"]
         metrics_per_k = results["metrics_per_k"]
 
-        # Imprimindo as métricas
-        print(f"\nCross-Validation Results for Cosine KNN:")
+        print(f"\nCross-Validation Results for {metric_name} KNN:")
         print(f"Best k: {best_k}")
         print(f"Best Mean Accuracy: {best_accuracy:.4f}")
         print(f"Cross-validation scores (mean ± std): {best_scores.mean():.4f} ± {best_scores.std():.4f}")
@@ -362,21 +354,94 @@ def knn_classification(df: pd.DataFrame, metric: str = 'euclidean'):
         print(f"F1-Score: {final_f1_score:.4f}")
         print(f"Top-{best_k} Accuracy: {final_top_k_accuracy:.4f}")
 
-        # Garantir que temos as predições finais apenas
-        metrics_for_plot = [{
-            'k': best_k,
+        values_for_plot.append({
+            'metric': metric_name,
+            'best_k': best_k,
             'auc': final_auc,
             'y_pred_proba': results['final_y_pred_proba']
-        }]
+        })
 
-        # Plotando a curva ROC apenas com as predições finais
-        plot_roc_curve(metrics_for_plot, y_test, output_dir="./")
+        metrics_per_k_df = pd.DataFrame(metrics_per_k)
 
+        for i, row in metrics_per_k_df.iterrows():
+            syndrome_id = y_test.values[i]
+            metrics_per_k_df.at[i, 'syndrome_id'] = syndrome_id
+
+        output_filename = f"{metric_name}_resume"
+        summarized_metrics = summarize_metrics(
+            metrics_per_k_df, output_dir="./", rank_by="accuracy", file_name=output_filename
+        )
+        return output_filename
+
+    # Lista para armazenar as métricas de ambas as métricas
+    values_for_plot:list = []
+
+    if metric == 'euclidean':
+        # Chamando a função knn_euclidean
+        results = knn_euclidean(X_train, X_test, y_train, y_test)
+        output_filename = process_results(results, "Euclidean", values_for_plot, y_test)
+        
+    elif metric == 'cosine':
+        # Chamando a função knn_cosine_cv
+        results = knn_cosine_cv(X_train, y_train)
+        output_filename = process_results(results, "Cosine", values_for_plot, y_test)
+        
     else:
         print(f"[ERROR] Métrica desconhecida: {metric}")
+        return
+
+    # Plotando a curva ROC e salvando a imagem
+    plot_roc_curve(values_for_plot, y_test, output_dir="./", file_name=output_filename)
+
+    # Plotando a comparação entre as duas métricas
+    plot_comparison_roc(values_for_plot, y_test)
 
 
 
+# Função para plotar a comparação das curvas ROC entre os modelos
+
+def plot_comparison_roc(metrics_per_k, y_test, output_dir="./", file_name='ROC_comparison_curve'):
+    plt.figure(figsize=(10, 8))
+    
+    lb = LabelBinarizer()
+    y_test_bin = lb.fit_transform(y_test)
+    
+    if y_test_bin.shape[1] == 1:
+        y_test_bin = np.hstack([1 - y_test_bin, y_test_bin])
+    
+    # Ajustar os tamanhos de y_test_bin e y_pred_proba
+    def align_arrays(arr1, arr2):
+        min_length = min(len(arr1), len(arr2))
+        return arr1[:min_length], arr2[:min_length]
+
+    # Iterar sobre as métricas e plotar a curva ROC para cada uma
+    for model_data in metrics_per_k:
+        y_pred_proba = model_data['y_pred_proba']
+        # Alinhar arrays
+        y_test_bin, y_pred_proba = align_arrays(y_test_bin, y_pred_proba)
+        
+        # Plotar curva ROC para cada classe
+        for i in range(y_test_bin.shape[1]):
+            fpr, tpr, _ = roc_curve(y_test_bin[:, i], y_pred_proba[:, i])
+            roc_auc = auc(fpr, tpr)
+            # Nome da classe
+            syndrome_id = lb.classes_[i]
+            # Nome da métrica
+            metric_name = model_data['metric']
+            plt.plot(fpr, tpr, lw=2,
+                     label=f'{metric_name} (Class {syndrome_id}) (AUC = {roc_auc:.2f})')  
+
+    plt.plot([0, 1], [0, 1], 'k--', lw=2)  # Linha aleatória
+    plt.xlim([0.0, 1.0])
+    plt.ylim([0.0, 1.05])
+    plt.xlabel('False Positive Rate')
+    plt.ylabel('True Positive Rate')
+    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.legend(loc="lower right")
+    
+    # Salvar o plot
+    plt.savefig(os.path.join(output_dir, f'{file_name}.png'))
+    plt.close()
 
 
 if __name__ == "__main__":
@@ -388,6 +453,5 @@ if __name__ == "__main__":
     if df is not None:
         print("\n[INFO] Running KNN with Euclidean Distance...")
         knn_classification(df, metric='euclidean')
-
         print("\n[INFO] Running KNN with Cosine Distance...")
         knn_classification(df, metric='cosine')
