@@ -12,10 +12,11 @@
     No Linux/Mac:
         Abra o Terminal.
         Navegue até a pasta onde você salvou os arquivos usando: cd ~/meu_projeto/.
-        Crie o ambiente virtual com o comando: python3 -m venv venv.
-        Ative o ambiente virtual com: source venv/bin/activate.
+        Crie o ambiente virtual com o comando: python3 -m venv venv
+        Ative o ambiente virtual com: source venv/bin/activate
 
-3 - Instale as dependências: Com o ambiente virtual ativo, instale as bibliotecas necessárias listadas no arquivo requirements.txt usando o comando: pip install -r requirements.txt.
+3 - Instale as dependências: Com o ambiente virtual ativo, instale as bibliotecas necessárias listadas no arquivo requirements.txt usando o comando: 
+    pip install --upgrade -r requirements.txt
 
 4 - atualize o caminho de entrada do mini_gm_public_v0.1.p em seu computador, apenas copiar o caminho da pasta que ele esta, junto ao seu devido nome, e atualizar em:
     - config.py
