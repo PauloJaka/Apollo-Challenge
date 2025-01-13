@@ -1,4 +1,4 @@
-1 - Baixe os arquivos: Faça o download de todos os 6 arquivos do projeto: main_pipeline.py, classification_process.py, data_visualization.py, load_data, data_processing e requirements.txt.
+1 - Baixe os arquivos: Faça o download de todos os 6 arquivos do projeto: main_pipeline.py, classification_process.py, data_visualization.py, load_data, data_processing, config.py e requirements.txt.
  Coloque todos os arquivos em uma pasta no seu computador, como C:/meu_projeto/ no Windows ou ~/meu_projeto/ no Linux/Mac.
 
 2 - Crie e ative um ambiente virtual (venv):
