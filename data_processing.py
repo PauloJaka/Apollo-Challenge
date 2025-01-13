@@ -2,7 +2,7 @@ import pandas as pd
 from typing import Any, Dict
 from ydata_profiling import ProfileReport  # type: ignore
 from load_data import flatten_data, load_pickle  
-
+import config
 
 class DataProcessor:
     def __init__(self, pickle_path: str):
@@ -78,7 +78,7 @@ class DataProcessor:
         return None
 
 
-pickle_path = "/media/paulo-jaka/Extras/DesafiosML/mini_gm_public_v0.1.p"
+pickle_path = config.PICKLE_PATH
 processor = DataProcessor(pickle_path)
 
 if __name__ == "__main__":

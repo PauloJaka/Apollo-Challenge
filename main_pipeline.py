@@ -1,8 +1,9 @@
 from data_processing import DataProcessor
 from data_visualization import analyze_and_create_collage
 from classification_process import knn_classification
+import config
 
-pickle_path = "/media/paulo-jaka/Extras/DesafiosML/mini_gm_public_v0.1.p"
+pickle_path = config.PICKLE_PATH
 processor = DataProcessor(pickle_path)
 
 # load

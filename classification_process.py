@@ -8,6 +8,7 @@ from sklearn.metrics.pairwise import cosine_similarity  # type: ignore
 from sklearn.feature_selection import SelectKBest, f_classif  # type: ignore
 import matplotlib.pyplot as plt
 import os
+import config
 
 def knn_euclidean(X_train, X_test, y_train, y_test):
     print("[INFO] Calculando distância euclidiana...")
@@ -467,7 +468,7 @@ def plot_comparison_roc(metrics_per_k, y_test, output_dir="./", file_name='ROC_c
 
 if __name__ == "__main__":
     from data_processing import DataProcessor  
-    pickle_path = "/media/paulo-jaka/Extras/DesafiosML/mini_gm_public_v0.1.p"
+    pickle_path = config.PICKLE_PATH
     processor = DataProcessor(pickle_path)
     df = processor.load_and_flatten_data()
 

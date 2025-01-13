@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt  # type: ignore
 from sklearn.preprocessing import LabelEncoder  # type: ignore
 from data_processing import DataProcessor
 from sklearn.cluster import KMeans, DBSCAN  # type: ignore
+import config
 
 def reduce_dimensionality_with_tsne(df: pd.DataFrame) -> pd.DataFrame:
     if 'embedding' not in df.columns:
@@ -136,7 +137,7 @@ def analyze_and_create_collage(df: pd.DataFrame, output_path: str) -> None:
     
 if __name__ == "__main__":
     from data_processing import DataProcessor  
-    pickle_path = "/media/paulo-jaka/Extras/DesafiosML/mini_gm_public_v0.1.p"
+    pickle_path = config.PICKLE_PATH
     processor = DataProcessor(pickle_path)
     df = processor.load_and_flatten_data()
 
